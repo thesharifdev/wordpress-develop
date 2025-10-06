@@ -85,6 +85,9 @@ if ( empty( $file ) ) {
 $file      = validate_file_to_edit( $file, $plugin_files );
 $real_file = WP_PLUGIN_DIR . '/' . $file;
 
+$plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/' . $plugin_files[0] );
+$plugin_name = $plugin_data['Name'];
+
 // Handle fallback editing of file when JavaScript is not available.
 $edit_error     = null;
 $posted_content = null;
@@ -148,7 +151,7 @@ get_current_screen()->add_help_tab(
 
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-	'<p>' . __( '<a href="https://wordpress.org/documentation/article/plugins-editor-screen/">Documentation on Editing Plugins</a>' ) . '</p>' .
+	'<p>' . __( '<a href="https://developer.wordpress.org/advanced-administration/plugins/editor-screen/">Documentation on Editing Plugins</a>' ) . '</p>' .
 	'<p>' . __( '<a href="https://developer.wordpress.org/plugins/">Documentation on Writing Plugins</a>' ) . '</p>' .
 	'<p>' . __( '<a href="https://wordpress.org/support/forums/">Support forums</a>' ) . '</p>'
 );
@@ -157,7 +160,7 @@ $settings = array(
 	'codeEditor' => wp_enqueue_code_editor( array( 'file' => $real_file ) ),
 );
 wp_enqueue_script( 'wp-theme-plugin-editor' );
-wp_add_inline_script( 'wp-theme-plugin-editor', sprintf( 'jQuery( function( $ ) { wp.themePluginEditor.init( $( "#template" ), %s ); } )', wp_json_encode( $settings ) ) );
+wp_add_inline_script( 'wp-theme-plugin-editor', sprintf( 'jQuery( function( $ ) { wp.themePluginEditor.init( $( "#template" ), %s ); } )', wp_json_encode( $settings, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ) ) );
 wp_add_inline_script( 'wp-theme-plugin-editor', sprintf( 'wp.themePluginEditor.themeOrPlugin = "plugin";' ) );
 
 require_once ABSPATH . 'wp-admin/admin-header.php';
@@ -220,23 +223,30 @@ endif;
 	<?php
 	if ( is_plugin_active( $plugin ) ) {
 		if ( is_writable( $real_file ) ) {
-			/* translators: %s: Plugin file name. */
-			printf( __( 'Editing %s (active)' ), '<strong>' . esc_html( $file ) . '</strong>' );
+			/* translators: %s: Plugin name. */
+			printf( __( 'Editing %s (active)' ), '<strong>' . esc_html( $plugin_name ) . '</strong>' );
 		} else {
-			/* translators: %s: Plugin file name. */
-			printf( __( 'Browsing %s (active)' ), '<strong>' . esc_html( $file ) . '</strong>' );
+			/* translators: %s: Plugin name. */
+			printf( __( 'Browsing %s (active)' ), '<strong>' . esc_html( $plugin_name ) . '</strong>' );
 		}
 	} else {
 		if ( is_writable( $real_file ) ) {
-			/* translators: %s: Plugin file name. */
-			printf( __( 'Editing %s (inactive)' ), '<strong>' . esc_html( $file ) . '</strong>' );
+			/* translators: %s: Plugin name. */
+			printf( __( 'Editing %s (inactive)' ), '<strong>' . esc_html( $plugin_name ) . '</strong>' );
 		} else {
-			/* translators: %s: Plugin file name. */
-			printf( __( 'Browsing %s (inactive)' ), '<strong>' . esc_html( $file ) . '</strong>' );
+			/* translators: %s: Plugin name. */
+			printf( __( 'Browsing %s (inactive)' ), '<strong>' . esc_html( $plugin_name ) . '</strong>' );
 		}
 	}
 	?>
 </h2>
+<?php
+printf(
+	/* translators: %s: File path. */
+	' <span><strong>' . __( 'File: %s' ) . '</strong></span>',
+	esc_html( $file )
+);
+?>
 </div>
 <div class="alignright">
 	<form action="plugin-editor.php" method="get">
@@ -278,6 +288,7 @@ endif;
 		<ul role="group">
 			<?php wp_print_plugin_file_tree( wp_make_plugin_file_tree( $plugin_editable_files ) ); ?>
 		</ul>
+	</li>
 	</ul>
 </div>
 
@@ -295,7 +306,7 @@ endif;
 		<div id="documentation" class="hide-if-no-js">
 			<label for="docs-list"><?php _e( 'Documentation:' ); ?></label>
 			<?php echo $docs_select; ?>
-			<input disabled id="docs-lookup" type="button" class="button" value="<?php esc_attr_e( 'Look Up' ); ?>" onclick="if ( '' != jQuery('#docs-list').val() ) { window.open( 'https://api.wordpress.org/core/handbook/1.0/?function=' + escape( jQuery( '#docs-list' ).val() ) + '&amp;locale=<?php echo urlencode( get_user_locale() ); ?>&amp;version=<?php echo urlencode( get_bloginfo( 'version' ) ); ?>&amp;redirect=true'); }" />
+			<input disabled id="docs-lookup" type="button" class="button" value="<?php esc_attr_e( 'Look Up' ); ?>" onclick="if ( '' !== jQuery('#docs-list').val() ) { window.open( 'https://api.wordpress.org/core/handbook/1.0/?function=' + escape( jQuery( '#docs-list' ).val() ) + '&amp;locale=<?php echo urlencode( get_user_locale() ); ?>&amp;version=<?php echo urlencode( get_bloginfo( 'version' ) ); ?>&amp;redirect=true'); }" />
 		</div>
 	<?php endif; ?>
 
@@ -323,7 +334,7 @@ endif;
 			printf(
 				/* translators: %s: Documentation URL. */
 				__( 'You need to make this file writable before you can save your changes. See <a href="%s">Changing File Permissions</a> for more information.' ),
-				__( 'https://wordpress.org/documentation/article/changing-file-permissions/' )
+				__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' )
 			);
 			?>
 		</p>
